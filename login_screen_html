@@ -8,17 +8,15 @@
   <link rel="stylesheet" href="styles/bootstrap-material-design.min.css">
   <link rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.2/firebase-ui-auth.css" />
   <link rel="stylesheet" href="styles/main.css">
-  <title>My Photo Bucket</title>
+  <title>TapWater</title>
 </head>
 
 <body>
-  <nav class="navbar navbar-dark fixed-top">
-    <a class="navbar-brand" href="#">My Photo Bucket</a>
+  <nav class="navbar fixed-top">
+    <a class="navbar-brand" href="#">TapWater</a>
   </nav>
   <div id="loginPage" class="container page-container">
-    <p class="signInText">Please sign in to use</p>
-    <p class="signInText">Photo Bucket</p>
-    <!-- <img id="roseLogo" src="images/rose_logo.png" alt="Rose-Hulman logo"> -->
+    <img id="tapwaterLogo" src="images/templogo.png" alt="TapWater logo">
   </div>
 
   <div id="firebaseui-auth-container"></div>
