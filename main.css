@@ -1,0 +1,126 @@
+body {
+    background: #99dffd;
+}
+
+.navbar {
+    background-color: #02327a;
+}
+
+.navbar-brand {
+    color:#99dffd;
+}
+
+.page-container {
+    margin-top: 75px;
+}
+
+#fab {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    background: #800000;
+    color: white;
+    z-index: 999;
+}
+
+#fab:active {
+    transform: translateY(2px);
+    opacity: 0.8;
+}
+
+.card {
+    margin: 10px 10px;
+}
+
+#listPage .card-title,
+#listPage .card-subtitle {
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    text-overflow: ellipsis;
+}
+
+.dropdown-menu-right {
+    left: -128px;
+}
+
+.signInText {
+    text-align: center;
+    font-size: 50px;
+    line-height: 45px;
+}
+
+#tapwaterLogo {
+    display: block;
+    margin: auto;
+}
+
+#roseFireButton {
+    display: block;
+    margin: 60px auto;
+    color: white;
+    background: #800000;
+    font-size: 1.1em;
+    padding: 10px 30px;
+    border-radius: 5px;
+}
+
+.bmd-layout-content {
+    height: 100vh;
+}
+
+.bmd-layout-drawer>header {
+    background-color: #800000;
+    color: white;
+}
+
+.bmd-layout-drawer>ul {
+    background-color: #DDD;
+}
+
+.list-group-item :first-child {
+    margin-right: 0.75rem;
+}
+
+#menuEdit,
+#menuDelete {
+    display: none;
+}
+
+#columns {
+    column-count: 3;
+    column-gap: 5px;
+}
+
+@media (min-width: 992px) {
+    #columns {
+        column-count: 4;
+        column-gap: 10px;
+    }
+}
+
+.pin {
+    display: inline-block;
+    box-shadow: 0 1px 2px rgba(34, 25, 25, 0.4);
+    margin: 0 2px 15px;
+    padding: 10px;
+    padding-bottom: 5px;
+    background: linear-gradient(45deg, #FFF, #EEE);
+    transition: all .2s ease;
+}
+
+.pin img {
+    width: 100%;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 8px;
+    margin-bottom: 3px;
+}
+
+.pin p {
+    font: 12px/18px Arial, sans-serif;
+    text-align: center;
+    color: #333;
+    margin: 0;
+    max-height: 18px;
+    overflow: hidden;
+}
