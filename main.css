@@ -14,12 +14,21 @@ body {
     margin-top: 75px;
 }
 
-#fab {
+#fabAdd {
     position: absolute;
-    right: 10px;
-    bottom: 10px;
-    background: #800000;
-    color: white;
+    right: 20px;
+    bottom: 15px;
+    background: #02327a;
+    color: #99dffd;
+    z-index: 999;
+}
+
+#fabDelete {
+    position: absolute;
+    right: 20px;
+    bottom: 570px;
+    background: #02327a;
+    color: #99dffd;
     z-index: 999;
 }
 
@@ -30,6 +39,8 @@ body {
 
 .card {
     margin: 10px 10px;
+    height: 650px;
+    background-color: gray;
 }
 
 #listPage .card-title,
@@ -65,26 +76,41 @@ body {
     border-radius: 5px;
 }
 
+#loginButton {
+    display: block;
+    margin: 30px auto;
+    color: white;
+    background: #02327a;
+    font-size: 1.1em;
+    padding: 10px 30px;
+    border-radius: 5px;
+}
+
+.flashyText {
+    font-size: 50px;
+    color: rgb(43, 47, 125);
+}
+
+.aboutText {
+    text-align: center;
+    padding-top: 30px;
+}
+
 .bmd-layout-content {
     height: 100vh;
 }
 
 .bmd-layout-drawer>header {
-    background-color: #800000;
+    background-color: #02327a;
     color: white;
 }
 
 .bmd-layout-drawer>ul {
-    background-color: #DDD;
+    background-color: #99dffd;
 }
 
 .list-group-item :first-child {
     margin-right: 0.75rem;
-}
-
-#menuEdit,
-#menuDelete {
-    display: none;
 }
 
 #columns {
@@ -123,4 +149,50 @@ body {
     margin: 0;
     max-height: 18px;
     overflow: hidden;
+}
+
+#options {
+    color: #99dffd;
+}
+
+#displayTableName {
+    color: White;
+    font-size: 1.5em;
+    text-align: center;
+}
+
+.btn-adder {
+    position: absolute;
+    background-color: white;
+    margin: 15px;
+    z-index: 999;
+}
+
+#addingCardsButton {
+    right: 10px;
+    bottom: 60px;
+}
+
+#addingStacksButton {
+    right: 10px;
+    bottom: 10px;
+}
+
+.card-body {
+    padding: 0px 0px;
+}
+.nav-item {
+    padding: 5px 20px;
+}
+.stackName {
+    padding: 0px 0px;
+    color: white !important;
+    text-transform: capitalize;
+    font-size: 18px !important;
+}
+.stackMenu {
+    padding: 0px 0px;
+}
+hr {
+    margin-top: 0;
 }
