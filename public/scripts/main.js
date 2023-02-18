@@ -100,10 +100,18 @@ rhit.ImageCaption = class {
 }
 
 rhit.CardImage = class {
-	constructor(url, name) {
-		this.url = url;
-		this.name = name;
-		console.log("Created CardImage with name " + name + " and url " + url);
+	constructor(url, name, x, y) {
+		this.url = url
+		this.name = name
+		this.posX = x
+		this.posY = y
+		this.height = 250
+		this.width = 250
+		this.z = 0
+		console.log("Created CardImage with name " + name + " and url " + url + 
+		". Has position X: " + this.posX + " and position Y: " + this.posY +
+		". Has height " + this.height + " and width " + this.width +
+		". zIndex is " + this.z)
 	}
 }
 
@@ -185,10 +193,14 @@ rhit.fbCardImagesManager = class {
 	add(url, name) {
 		console.log(`add url ${url}`);
 		console.log(`add name of the file ${name}`);
+		//console.log(`add x position ${x}`);
+		//console.log(`add y position ${y}`);
 
 		this._ref.collection("cards").add({
 			cardUrl: url,
-			cardName: name
+			cardName: name,
+			cardX :'0',
+			cardY : '0'
 		})
 		.catch(function (error) {
 			console.log("Error adding document: ", error);
@@ -198,7 +210,7 @@ rhit.fbCardImagesManager = class {
 	beginListening(changeListener) {
 		let query = this._ref.collection("cards").orderBy("cardName", "desc");
 		this._unsubscribe = query.onSnapshot((querySnapshot) => {
-				console.log("Photo bucket update!");
+				console.log("Card update!");
 				this._documentSnapshots = querySnapshot.docs;
 				changeListener();
 		});
@@ -209,11 +221,39 @@ rhit.fbCardImagesManager = class {
 	get length() {
 		return this._documentSnapshots.length;
 	}
+
+	updatePosX(posX, index) {
+		const xRef = this._ref.collection("cards")
+		// need to get the x coordinate
+		xRef.update({
+			["cardX"]: posX,
+		})
+		.then(() => {
+			console.log("Updated position X!")
+		})
+		.catch(function (error) {
+			console.error("Error updating document: ", error)
+		})
+	}
+
+	setImgSize(size) {
+		const cards = document.querySelectorAll('.draggable')
+		for (let card of cards) {
+			card.setAttribute('height', size)
+			card.setAttribute('width', size)
+		}
+	}
+
 	getCardImageAtIndex(index) {
 		const docSnapshot = this._documentSnapshots[index];
 		const mq = new rhit.CardImage(
 			docSnapshot.get("cardUrl"),
-			docSnapshot.get("cardName")
+			docSnapshot.get("cardName"),
+			docSnapshot.get("cardX"),
+			docSnapshot.get("cardY"),
+			docSnapshot.get("cardHeight"),
+			docSnapshot.get("cardWidth"),
+			docSnapshot.get("cardZ")
 		);
 		return mq;
 	}
@@ -274,6 +314,7 @@ rhit.DetailPageController = class {
 		rhit.fbCardImagesManager.beginListening(this.updateView.bind(this));
 	}
 	updateView() {
+
 		//document.querySelector("#cardImage").src = rhit.fbSingleImageManager.image;
 		//document.querySelector("#cardImage").alt = rhit.fbSingleImageManager.caption;
 		document.querySelector("#displayTableName").innerHTML = rhit.fbSingleImageManager.caption;
@@ -291,14 +332,14 @@ rhit.DetailPageController = class {
 		}
 
 		console.log("List needs updating.");
-		console.log(`# images = ${rhit.fbCardImagesManager.length}`);
-		console.log("Example images = ", rhit.fbCardImagesManager.getCardImageAtIndex(0));
+		//console.log(`# images = ${rhit.fbCardImagesManager.length}`);
+		//console.log("Example images = ", rhit.fbCardImagesManager.getCardImageAtIndex(0));
 
 		const newList = htmlToElement('<div id="cards"></div>');
 		for(let i = 0; i < rhit.fbCardImagesManager.length; i++) {
 			const ci = rhit.fbCardImagesManager.getCardImageAtIndex(i);
 			const newCard = this._createCard(ci);
-			console.log(newCard);
+			//console.log(newCard);
 			newList.appendChild(newCard);
 		}
 		const oldList = document.querySelector("#cards");
@@ -308,13 +349,16 @@ rhit.DetailPageController = class {
 
 		const draggables = document.querySelectorAll('.draggable');
 		for (let draggable of draggables) {
-			new Draggable(draggable);
+			new Draggable(draggable, draggable.style.left, draggable.style.top);
 		}
-
 	}
 	_createCard(cardImage) {
-		return htmlToElement(`<img class="draggable" src=${cardImage.url} alt=${cardImage.name}>`);
+		return htmlToElement(`<img class="draggable" width=${cardImage.width} height=${cardImage.height} 
+								src=${cardImage.url} alt="${cardImage.name}" 
+								style="position: absolute; z-index: ${cardImage.z}; 
+								left: ${cardImage.posX}; top: ${cardImage.posY}">`);
 	}
+
 }
 
 
@@ -561,14 +605,12 @@ rhit.startFirebaseUI = function() {
 
 rhit.main();
 
-
-
-
 class Draggable {
-	constructor(el) {
+
+	constructor(el, x = null, y = null) {
 		this.el = el
-		this.shiftX = null
-		this.shiftY = null
+		this.shiftX = x
+		this.shiftY = y
 		this.onMouseDown = this.onMouseDown.bind(this)
 		this.onMouseMove = this.onMouseMove.bind(this)
 		this.onMouseUp = this.onMouseUp.bind(this)
@@ -578,14 +620,16 @@ class Draggable {
 	addEventHandlers() {
 		this.el.addEventListener('mousedown', this.onMouseDown)
 		this.el.addEventListener('dragstart', e => e.preventDefault())
-		document.addEventListener('mouseup', this.onMouseUp)
+		this.el.addEventListener('mouseup', this.onMouseUp)
 	}
 	
 	onMouseDown(e) {
 		this.getDragPointer(e.clientX, e.clientY)
 		this.prepareElement()
+		this.unprepareOtherElements()
 		this.moveElementTo(e.pageX, e.pageY)
 		document.addEventListener('mousemove', this.onMouseMove)
+		//console.log("Card " + this.el.getAttribute('alt') + "'s Initial Position X: " + this.el.posX + ", Position Y: " + this.el.posY)
 	}
 	
 	getDragPointer(x, y) {
@@ -594,13 +638,45 @@ class Draggable {
 		this.shiftY = y - elRect.top
 	}
 	
+	// sets card being clicked to the front
 	prepareElement() {
 		this.el.style.position = 'absolute'
 		this.el.style.zIndex = 999
 	}
+
+	// need to go through every other card and set them to the back
+	unprepareOtherElements() {
+		const cards = document.querySelectorAll('.draggable')
+		for (let card of cards) {
+			// check if the current card is the element being clicked
+			// if not, set its z-index to 0
+			if(card.getAttribute('alt') != this.el.getAttribute('alt')) {
+				card.style.zIndex -= 1
+			}
+		}
+	}
+
+	setPositions() {
+		const elRect = this.el.getBoundingClientRect()
+		this.el.posX = elRect.left
+		this.el.posY = elRect.top
+		//console.log("Card " + this.el.getAttribute('alt') + "'s New Position X: " + this.el.posX + ", Position Y: " + this.el.posY)
+
+		const docRef = firebase.firestore().collection('TapWater').doc('xaXoD72SBXTxOPexC4Hb').collection('cards').doc('a6AzdxMt507MQPvik680')
+		docRef.update({
+			cardX: this.el.posX,
+			cardY: this.el.posY
+		})
+		.then(() => {
+			console.log('Stored position!')
+		})
+		.catch((error) => {
+			console.error('Error updating document: ', error)
+		})
+	}
 	
 	moveElementTo(x, y) {
-		const leftPosition = x - this.shiftX < 0 ? 0 : x - this.shiftX;
+		const leftPosition = x - this.shiftX < 0 ? 0 : x - this.shiftX
 		const topPosition = y - this.shiftY < 0 ? 0 : y - this.shiftY
 		this.el.style.left = `${leftPosition}px`
 		this.el.style.top = `${topPosition}px`
@@ -612,6 +688,7 @@ class Draggable {
 	
 	onMouseUp(e) {
 		document.removeEventListener('mousemove', this.onMouseMove)
+		this.setPositions();
 	}
 	
 }
