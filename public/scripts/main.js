@@ -35,10 +35,10 @@ rhit.ListPageController = class {
 		document.querySelector("#submitAddImage").addEventListener("click", (event) => {
 			//const image = document.querySelector("#inputImage").value;
 			const caption = document.querySelector("#inputName").value;
-			//console.log(`image ${image}`);
+		//	console.log(`image ${image}`);
 			console.log(`caption ${caption}`);
 
-			rhit.fbImageCaptionsManager.add(null, caption);
+			rhit.fbImageCaptionsManager.add('/one_winged_kong.jpg', caption);
 		});
 
 		$("addImageDialog").on("show.bs.modal", (event) => {
@@ -57,14 +57,29 @@ rhit.ListPageController = class {
 		rhit.fbImageCaptionsManager.beginListening(this.updateList.bind(this));
 	}
 
+	showImage(imgPath) {
+		var storageRef = firebase.storage().ref();
+		var spaceRef = storageRef.child(imgPath);
+		storageRef.child(imgPath).getDownloadURL().then(function(url) {
+			document.querySelector('img').src = imgPath;
+		}).catch(function(error) {
+			console.log("Did not show");
+		});
+	}
+
 	_createCard(imageCaption) {
+		console.log("Created card");
+		this.showImage('one_winged_kong.jpg');
 		return htmlToElement(`
 		<div class="pin"><img
-        src=${imageCaption.image}
-        alt=${imageCaption.image}>
-      <p class="caption">${imageCaption.caption}</p>
+        src="${'one_winged_kong.jpg'}"
+        alt= "">
+      <p class="caption">"${imageCaption.caption}"</p>
 	  </div>`);
+	  
 	}
+
+
 
 	updateList() {
 		console.log("List needs updating.");
@@ -120,6 +135,7 @@ rhit.fbImageCaptionsManager = class {
 	}
 	
 	add(image, caption) {
+		console.log("Inside add function");
 		console.log(`add image ${image}`);
 		console.log(`add caption ${caption}`);
 
