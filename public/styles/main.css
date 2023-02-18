@@ -192,7 +192,14 @@ body {
 }
 .stackMenu {
     padding: 0px 0px;
+    color: white !important;
 }
 hr {
     margin-top: 0;
+}
+
+.cardStack {
+    max-width: 18rem;
+    min-width: 18rem;
+    max-height: 28rem;
 }
