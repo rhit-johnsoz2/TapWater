@@ -99,6 +99,14 @@ rhit.ImageCaption = class {
 	}
 }
 
+rhit.CardImage = class {
+	constructor(url, name) {
+		this.url = url;
+		this.name = name;
+		console.log("Created CardImage with name " + name + " and url " + url);
+	}
+}
+
 rhit.fbImageCaptionsManager = class {
 	constructor(uid) {
 		this._uid = uid;
@@ -186,7 +194,31 @@ rhit.fbCardImagesManager = class {
 			console.log("Error adding document: ", error);
 		});
 	}
+
+	beginListening(changeListener) {
+		let query = this._ref.collection("cards").orderBy("cardName", "desc");
+		this._unsubscribe = query.onSnapshot((querySnapshot) => {
+				console.log("Photo bucket update!");
+				this._documentSnapshots = querySnapshot.docs;
+				changeListener();
+		});
+	}
+	stopListening() {
+		this._unsubscribe();
+	}
+	get length() {
+		return this._documentSnapshots.length;
+	}
+	getCardImageAtIndex(index) {
+		const docSnapshot = this._documentSnapshots[index];
+		const mq = new rhit.CardImage(
+			docSnapshot.get("cardUrl"),
+			docSnapshot.get("cardName")
+		);
+		return mq;
+	}
 }
+
 
 rhit.DetailPageController = class {
 	constructor() {
@@ -198,9 +230,10 @@ rhit.DetailPageController = class {
 
 		document.querySelector("#fileInput").addEventListener("change", (event) => {
 			const files = event.target.files;
-			console.log(files);
-			for(file in files) {
-				rhit.fbSingleImageManager.uploadPhotoToStorage(file);
+			// console.log(files);
+			for(let i = 0; i < files.length; i++) {
+				console.log(files[i]);
+				rhit.fbSingleImageManager.uploadPhotoToStorage(files[i]);
 			}
 		});
 
@@ -237,30 +270,50 @@ rhit.DetailPageController = class {
 			});
 		});
 
-		const draggables = document.querySelectorAll('.draggable');
-		for (let draggable of draggables) {
-			new Draggable(draggable);
-		}
-
 		rhit.fbSingleImageManager.beginListening(this.updateView.bind(this));
+		rhit.fbCardImagesManager.beginListening(this.updateView.bind(this));
 	}
 	updateView() {
 		//document.querySelector("#cardImage").src = rhit.fbSingleImageManager.image;
 		//document.querySelector("#cardImage").alt = rhit.fbSingleImageManager.caption;
 		document.querySelector("#displayTableName").innerHTML = rhit.fbSingleImageManager.caption;
 		
-		this._ref.onSnapshot((querySnapshot) => {
-			querySnapshot.forEach((doc) => {
-				console.log("Document Name: " + doc.id); // For doc name
-				//`/TapWater/${doc.id}/images`
-			})
-		})
+		// this._ref.onSnapshot((querySnapshot) => {
+		// 	querySnapshot.forEach((doc) => {
+		// 		console.log("Document Name: " + doc.id); // For doc name
+		// 		//`/TapWater/${doc.id}/images`
+		// 	})
+		// })
 		
 		if(rhit.fbSingleImageManager.author == rhit.fbAuthManager.uid) {
 			document.querySelector("#menuEdit").style.display = "flex";
 			document.querySelector("#menuDelete").style.display = "flex";
 		}
 
+		console.log("List needs updating.");
+		console.log(`# images = ${rhit.fbCardImagesManager.length}`);
+		console.log("Example images = ", rhit.fbCardImagesManager.getCardImageAtIndex(0));
+
+		const newList = htmlToElement('<div id="cards"></div>');
+		for(let i = 0; i < rhit.fbCardImagesManager.length; i++) {
+			const ci = rhit.fbCardImagesManager.getCardImageAtIndex(i);
+			const newCard = this._createCard(ci);
+			console.log(newCard);
+			newList.appendChild(newCard);
+		}
+		const oldList = document.querySelector("#cards");
+		oldList.removeAttribute("id");
+		oldList.hidden = true;
+		oldList.parentElement.appendChild(newList);
+
+		const draggables = document.querySelectorAll('.draggable');
+		for (let draggable of draggables) {
+			new Draggable(draggable);
+		}
+
+	}
+	_createCard(cardImage) {
+		return htmlToElement(`<img class="draggable" src=${cardImage.url} alt=${cardImage.name}>`);
 	}
 }
 
@@ -311,11 +364,11 @@ rhit.fbSingleImageManager = class {
 		const metadata = {
 			"content-type": file.type
 		};
-		const storageRef = firebase.storage().ref().child(_captionId+"/"+file.name);
+		const storageRef = firebase.storage().ref().child(this._captionId+"/"+file.name);
 		storageRef.put(file, metadata).then((uploadSnapshot) => {
 			storageRef.getDownloadURL().then((downloadURL) => {
 				//add to table
-				//rhit.fbUserManager.updatePhotoUrl(downloadURL);
+				rhit.fbCardImagesManager.add(downloadURL, file.name);
 			});
 		});
 		console.log("upload:", file.name);
@@ -423,6 +476,7 @@ rhit.initializePage = function() {
 			window.location.href = "/";
 		}
 		rhit.fbSingleImageManager = new rhit.fbSingleImageManager(ImageCaptionId);
+		rhit.fbCardImagesManager = new rhit.fbCardImagesManager(ImageCaptionId);
 		new rhit.DetailPageController();
 	}
 
