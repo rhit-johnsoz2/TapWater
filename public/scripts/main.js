@@ -8,6 +8,7 @@ rhit.FB_KEY_LAST_TOUCHED = "lastTouched";
 rhit.fbImageCaptionsManager = null;
 rhit.fbSingleImageManager = null;
 rhit.fbCardImagesManager = null;
+rhit.fbStacksManager = null;
 rhit.fbAuthManager = null;
 rhit.fbUserManager = null;
 
@@ -35,10 +36,10 @@ rhit.ListPageController = class {
 		document.querySelector("#submitAddImage").addEventListener("click", (event) => {
 			//const image = document.querySelector("#inputImage").value;
 			const caption = document.querySelector("#inputName").value;
-			//console.log(`image ${image}`);
+		//	console.log(`image ${image}`);
 			console.log(`caption ${caption}`);
 
-			rhit.fbImageCaptionsManager.add(null, caption);
+			rhit.fbImageCaptionsManager.add('/one_winged_kong.jpg', caption);
 		});
 
 		$("addImageDialog").on("show.bs.modal", (event) => {
@@ -57,14 +58,29 @@ rhit.ListPageController = class {
 		rhit.fbImageCaptionsManager.beginListening(this.updateList.bind(this));
 	}
 
+	showImage(imgPath) {
+		var storageRef = firebase.storage().ref();
+		var spaceRef = storageRef.child(imgPath);
+		storageRef.child(imgPath).getDownloadURL().then(function(url) {
+			document.querySelector('img').src = imgPath;
+		}).catch(function(error) {
+			console.log("Did not show");
+		});
+	}
+
 	_createCard(imageCaption) {
+		console.log("Created card");
+		this.showImage('one_winged_kong.jpg');
 		return htmlToElement(`
 		<div class="pin"><img
-        src=${imageCaption.image}
-        alt=${imageCaption.image}>
-      <p class="caption">${imageCaption.caption}</p>
+        src="${'one_winged_kong.jpg'}"
+        alt= "">
+      <p class="caption">"${imageCaption.caption}"</p>
 	  </div>`);
+	  
 	}
+
+
 
 	updateList() {
 		console.log("List needs updating.");
@@ -100,18 +116,27 @@ rhit.ImageCaption = class {
 }
 
 rhit.CardImage = class {
-	constructor(url, name, x, y) {
+	constructor(url, name, x, y, z, id) {
+		this.id = id
 		this.url = url
 		this.name = name
 		this.posX = x
 		this.posY = y
 		this.height = 250
 		this.width = 250
-		this.z = 0
+		this.z = z
 		console.log("Created CardImage with name " + name + " and url " + url + 
 		". Has position X: " + this.posX + " and position Y: " + this.posY +
 		". Has height " + this.height + " and width " + this.width +
-		". zIndex is " + this.z)
+		". zIndex is " + this.z + this.id)
+	}
+}
+
+rhit.cardStack = class {
+	constructor(id, name) {
+		this.id = id;
+		this.name = name;
+		console.log("created stack id" + this.id);
 	}
 }
 
@@ -128,6 +153,7 @@ rhit.fbImageCaptionsManager = class {
 	}
 	
 	add(image, caption) {
+		console.log("Inside add function");
 		console.log(`add image ${image}`);
 		console.log(`add caption ${caption}`);
 
@@ -175,6 +201,60 @@ rhit.fbImageCaptionsManager = class {
 			docSnapshot.get(rhit.FB_KEY_CAPTION)
 		);
 		return mq;
+	}
+}
+
+rhit.fbStacksManager = class {
+	constructor(tableID) {
+		this._tableID = tableID;
+		console.log("Created fbStacksManager");
+		this._documentSnapshots = [];
+
+		//Uncaught TypeError: firebase.firestone is not a function
+		this._ref = firebase.firestore().collection(rhit.FB_COLLECTION_TAPWATER).doc(tableID);
+
+		this._unsubscribe = null;
+	}
+	
+	add(name) {
+		console.log(`add name ${name}`);
+
+		this._ref.collection("stacks").add({
+			stackName: name
+		})
+		.catch(function (error) {
+			console.log("Error adding document: ", error);
+		});
+	}
+
+	beginListening(changeListener) {
+		let query = this._ref.collection("stacks").orderBy("stackName", "desc");
+		this._unsubscribe = query.onSnapshot((querySnapshot) => {
+				console.log("Stacks update!");
+				this._documentSnapshots = querySnapshot.docs;
+				changeListener();
+		});
+	}
+	stopListening() {
+		this._unsubscribe();
+	}
+	get length() {
+		return this._documentSnapshots.length;
+	}
+	getStackAtIndex(index) {
+		const docSnapshot = this._documentSnapshots[index];
+		const s = new rhit.cardStack(docSnapshot.id, docSnapshot.get("stackName"))
+		return s;
+	}
+	update(id, updatedName) {
+		const currentStack = this._ref.collection("stacks").doc(id)
+		console.log(currentStack)
+		currentStack.update({
+			["stackName"]: updatedName
+		})
+	}
+	delete(id) {
+		this._ref.collection("stacks").doc(id).delete()
 	}
 }
 
@@ -249,11 +329,10 @@ rhit.fbCardImagesManager = class {
 		const mq = new rhit.CardImage(
 			docSnapshot.get("cardUrl"),
 			docSnapshot.get("cardName"),
-			docSnapshot.get("cardX"),
-			docSnapshot.get("cardY"),
-			docSnapshot.get("cardHeight"),
-			docSnapshot.get("cardWidth"),
-			docSnapshot.get("cardZ")
+			parseFloat(docSnapshot.get("cardX")),
+			parseFloat(docSnapshot.get("cardY")),
+			0,
+			docSnapshot.id
 		);
 		return mq;
 	}
@@ -267,6 +346,10 @@ rhit.DetailPageController = class {
 		document.querySelector("#addingCardsButton").addEventListener("click", (event) => {
 			document.querySelector("#fileInput").click();
 		});
+
+		document.querySelector("#addingStacksButton").addEventListener("click", (event) => {
+			rhit.fbStacksManager.add("New Stack");
+		})
 
 		document.querySelector("#fileInput").addEventListener("change", (event) => {
 			const files = event.target.files;
@@ -289,6 +372,12 @@ rhit.DetailPageController = class {
 			rhit.fbSingleImageManager.update(null, caption);
 		});
 
+		document.querySelector("#submitEditStack").addEventListener("click", (event) => {
+			const name = document.querySelector("#inputStackName").value;
+			console.log(`name ${name}`);
+			rhit.fbStacksManager.update(document.querySelector("#internalStackId").innerText, name);
+		});
+
 		$("editImageDialog").on("show.bs.modal", (event) => {
 			//pre animation
 			console.log("dialog about to show up");
@@ -301,6 +390,18 @@ rhit.DetailPageController = class {
 			document.querySelector("#inputName").focus();
 		});
 
+		$("editStackDialog").on("show.bs.modal", (event) => {
+			//pre animation
+			console.log("dialog about to show up");
+			//document.querySelector("#inputImage").src = rhit.fbSingleImageManager.image;
+			document.querySelector("#inputStackName").value = rhit.fbSingleImageManager.caption;
+		});
+		$("editStackDialog").on("shown.bs.modal", (event) => {
+			//post animation
+			console.log("dialog is now visible");
+			document.querySelector("#inputStackName").focus();
+		});
+
 		document.querySelector("#submitDeleteImage").addEventListener("click", (event) => {
 			rhit.fbSingleImageManager.delete().then(function () {
 				console.log("Document successfully deleted!");
@@ -309,9 +410,13 @@ rhit.DetailPageController = class {
 				console.error("Error removing document: ", error);
 			});
 		});
+		document.querySelector("#submitDeleteStack").addEventListener("click", (event) => {
+			rhit.fbStacksManager.delete(document.querySelector("#deleteStackId").innerText);
+		});
 
 		rhit.fbSingleImageManager.beginListening(this.updateView.bind(this));
 		rhit.fbCardImagesManager.beginListening(this.updateView.bind(this));
+		rhit.fbStacksManager.beginListening(this.updateView.bind(this))
 	}
 	updateView() {
 
@@ -339,26 +444,65 @@ rhit.DetailPageController = class {
 		for(let i = 0; i < rhit.fbCardImagesManager.length; i++) {
 			const ci = rhit.fbCardImagesManager.getCardImageAtIndex(i);
 			const newCard = this._createCard(ci);
-			//console.log(newCard);
+			console.log(newCard);
 			newList.appendChild(newCard);
+		}
+		for(let i = 0; i < rhit.fbStacksManager.length; i++) {
+			const s = rhit.fbStacksManager.getStackAtIndex(i);
+			const newStack = this._createStack(s);
+			newList.appendChild(newStack);
 		}
 		const oldList = document.querySelector("#cards");
 		oldList.removeAttribute("id");
 		oldList.hidden = true;
 		oldList.parentElement.appendChild(newList);
 
-		const draggables = document.querySelectorAll('.draggable');
-		for (let draggable of draggables) {
-			new Draggable(draggable, draggable.style.left, draggable.style.top);
+		// const draggables = document.querySelectorAll('.draggable');
+		// for (let draggable of draggables) {
+		// 	new Draggable(draggable, draggable.style.left, draggable.style.top);
+		// }
+
+		for (let queries of document.querySelectorAll(".menuEdit")) {
+			queries.addEventListener("click", (event) => {
+				document.querySelector("#internalStackId").innerText = queries.getAttribute('data-id');
+			})
 		}
+		for (let queries of document.querySelectorAll(".menuDelete")) {
+			queries.addEventListener("click", (event) => {
+				document.querySelector("#deleteStackId").innerText = queries.getAttribute('data-id');
+			})
+		}
+
 	}
 	_createCard(cardImage) {
-		return htmlToElement(`<img class="draggable" width=${cardImage.width} height=${cardImage.height} 
-								src=${cardImage.url} alt="${cardImage.name}" 
-								style="position: absolute; z-index: ${cardImage.z}; 
-								left: ${cardImage.posX}; top: ${cardImage.posY}">`);
+		return htmlToElement(`<img class="draggable" data-id=${cardImage.id} width=${cardImage.width} height=${cardImage.height} src=${cardImage.url} alt="${cardImage.name}" style=" left: ${cardImage.posX}; top: ${cardImage.posY}; position: absolute; z-index: ${cardImage.z};">`);
 	}
-
+	_createStack(stackName) {
+		return htmlToElement(`    <div class="card cardStack draggable">
+		<div class="card-body">
+		  <ul class="nav nav-pills card-header-pills justify-content-between">
+			<li class="nav-item">
+			  <a class="stackName">${stackName.name}</a>
+			</li>
+			<li class="nav-item">
+			  <a class="dropdown pull-xs-right">
+				<button class="btn bmd-btn-icon dropdown-toggle" type="button" id="lr2" data-toggle="dropdown" aria-haspopup="true">
+				  <i id="options" class="material-icons stackMenu">more_vert</i>
+				</button>
+				<div class="dropdown-menu dropdown-menu-right" aria-labelledby="lr2">
+				  <button class="dropdown-item menuDraw" type="button" data-toggle="modal" data-target="#drawImageDialog"><i class="material-icons">draw</i>&nbsp;&nbsp;&nbsp;Draw</button>
+				  <button class="dropdown-item menuShuffle" type="button" data-toggle="modal" data-target="#shuffleImageDialog"><i class="material-icons">shuffle</i>&nbsp;&nbsp;&nbsp;Shuffle</button>
+				  <button class="dropdown-item menuSearch" type="button" data-toggle="modal" data-target="#searchImageDialog"><i class="material-icons">search</i>&nbsp;&nbsp;&nbsp;Search</button>
+				  <button class="dropdown-item menuEdit" type="button" data-toggle="modal" data-target="#editStackDialog" data-id="${stackName.id}"><i class="material-icons">edit</i>&nbsp;&nbsp;&nbsp;Edit Name</button>
+				  <button class="dropdown-item menuDelete" type="button" data-toggle="modal" data-target="#deleteStackDialog" data-id="${stackName.id}"><i class="material-icons">delete</i>&nbsp;&nbsp;&nbsp;Delete</button>
+				</div>
+			  </a>
+			</li>
+		  </ul>
+		  <hr>
+		</div>
+	  </div>`)
+	}
 }
 
 
@@ -521,6 +665,7 @@ rhit.initializePage = function() {
 		}
 		rhit.fbSingleImageManager = new rhit.fbSingleImageManager(ImageCaptionId);
 		rhit.fbCardImagesManager = new rhit.fbCardImagesManager(ImageCaptionId);
+		rhit.fbStacksManager = new rhit.fbStacksManager(ImageCaptionId);
 		new rhit.DetailPageController();
 	}
 
@@ -607,7 +752,7 @@ rhit.main();
 
 class Draggable {
 
-	constructor(el, x = null, y = null) {
+	constructor(el, x, y) {
 		this.el = el
 		this.shiftX = x
 		this.shiftY = y
@@ -661,8 +806,7 @@ class Draggable {
 		this.el.posX = elRect.left
 		this.el.posY = elRect.top
 		//console.log("Card " + this.el.getAttribute('alt') + "'s New Position X: " + this.el.posX + ", Position Y: " + this.el.posY)
-
-		const docRef = firebase.firestore().collection('TapWater').doc('xaXoD72SBXTxOPexC4Hb').collection('cards').doc('a6AzdxMt507MQPvik680')
+		const docRef = firebase.firestore().collection('TapWater').doc(new URLSearchParams(window.location.search).get('id')).collection('cards').doc(this.el.getAttribute('data-id'))
 		docRef.update({
 			cardX: this.el.posX,
 			cardY: this.el.posY
