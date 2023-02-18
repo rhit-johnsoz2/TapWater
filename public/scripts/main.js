@@ -457,10 +457,10 @@ rhit.DetailPageController = class {
 		oldList.hidden = true;
 		oldList.parentElement.appendChild(newList);
 
-		// const draggables = document.querySelectorAll('.draggable');
-		// for (let draggable of draggables) {
-		// 	new Draggable(draggable, draggable.style.left, draggable.style.top);
-		// }
+		const draggables = document.querySelectorAll('.draggable');
+		for (let draggable of draggables) {
+			new Draggable(draggable, draggable.style.left, draggable.style.top);
+		}
 
 		for (let queries of document.querySelectorAll(".menuEdit")) {
 			queries.addEventListener("click", (event) => {
@@ -475,7 +475,7 @@ rhit.DetailPageController = class {
 
 	}
 	_createCard(cardImage) {
-		return htmlToElement(`<img class="draggable" data-id=${cardImage.id} width=${cardImage.width} height=${cardImage.height} src=${cardImage.url} alt="${cardImage.name}" style=" left: ${cardImage.posX}; top: ${cardImage.posY}; position: absolute; z-index: ${cardImage.z};">`);
+		return htmlToElement(`<img class="draggable" data-id=${cardImage.id} width=${cardImage.width} height=${cardImage.height} src=${cardImage.url} alt="${cardImage.name}" style=" left: ${cardImage.posX}px; top: ${cardImage.posY}px; position: absolute; z-index: ${cardImage.z};">`);
 	}
 	_createStack(stackName) {
 		return htmlToElement(`    <div class="card cardStack draggable">
@@ -805,7 +805,7 @@ class Draggable {
 		const elRect = this.el.getBoundingClientRect()
 		this.el.posX = elRect.left
 		this.el.posY = elRect.top
-		//console.log("Card " + this.el.getAttribute('alt') + "'s New Position X: " + this.el.posX + ", Position Y: " + this.el.posY)
+		console.log("Card " + this.el.getAttribute('alt') + "'s New Position X: " + this.el.posX + ", Position Y: " + this.el.posY)
 		const docRef = firebase.firestore().collection('TapWater').doc(new URLSearchParams(window.location.search).get('id')).collection('cards').doc(this.el.getAttribute('data-id'))
 		docRef.update({
 			cardX: this.el.posX,
