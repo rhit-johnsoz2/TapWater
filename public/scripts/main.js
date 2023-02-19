@@ -116,14 +116,14 @@ rhit.ImageCaption = class {
 }
 
 rhit.CardImage = class {
-	constructor(url, name, x, y, z, id) {
+	constructor(url, name, x, y, z, id, height, width) {
 		this.id = id
 		this.url = url
 		this.name = name
 		this.posX = x
 		this.posY = y
-		this.height = 250
-		this.width = 250
+		this.height = height
+		this.width = width
 		this.z = z
 		console.log("Created CardImage with name " + name + " and url " + url + 
 		". Has position X: " + this.posX + " and position Y: " + this.posY +
@@ -333,7 +333,9 @@ rhit.fbCardImagesManager = class {
 			parseFloat(docSnapshot.get("cardX")),
 			parseFloat(docSnapshot.get("cardY")),
 			parseFloat(docSnapshot.get("cardZ")),
-			docSnapshot.id
+			docSnapshot.id,
+			docSnapshot.get("cardHeight"),
+			docSnapshot.get("cardWidth")
 		);
 		return mq;
 	}
@@ -343,6 +345,22 @@ rhit.fbCardImagesManager = class {
 rhit.DetailPageController = class {
 	constructor() {
 		console.log("Made the detail page controller");
+
+		document.querySelector("#zoomInButton").addEventListener("click", (event) => {
+			const cards = document.querySelectorAll('.draggable')
+			for (let card of cards) {
+				card.width += 20
+				card.height += 20
+			}
+		});
+
+		document.querySelector("#zoomOutButton").addEventListener("click", (event) => {
+			const cards = document.querySelectorAll('.draggable')
+			for (let card of cards) {
+				card.width -= 20
+				card.height -= 20
+			}
+		});
 
 		document.querySelector("#addingCardsButton").addEventListener("click", (event) => {
 			document.querySelector("#fileInput").click();
@@ -479,7 +497,7 @@ rhit.DetailPageController = class {
 		return htmlToElement(`<img class="draggable" data-id=${cardImage.id} width=${cardImage.width} height=${cardImage.height} src=${cardImage.url} alt="${cardImage.name}" style=" left: ${cardImage.posX}px; top: ${cardImage.posY}px; position: absolute; z-index: ${cardImage.z};">`);
 	}
 	_createStack(stackName) {
-		return htmlToElement(`<div class="card cardStack draggable">
+		return htmlToElement(`<div class="card cardStack draggable position-absolute">
 		<div class="card-body">
 		  <ul class="nav nav-pills card-header-pills justify-content-between">
 			<li class="nav-item">
@@ -780,6 +798,7 @@ class Draggable {
 	
 	getDragPointer(x, y) {
 		const elRect = this.el.getBoundingClientRect()
+		console.log(this.el.nodeName)
 		this.shiftX = x - elRect.left
 		this.shiftY = y - elRect.top
 	}
