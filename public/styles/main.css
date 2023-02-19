@@ -38,7 +38,7 @@ body {
 }
 
 .card {
-    margin: 10px 10px;
+    margin: 0px 0px;
     height: 650px;
     background-color: gray;
 }
@@ -166,6 +166,16 @@ body {
     background-color: white;
     margin: 15px;
     z-index: 999;
+}
+
+#zoomOutButton {
+    right: 10px;
+    bottom: 110px;
+}
+
+#zoomInButton {
+    right: 10px;
+    bottom: 160px;
 }
 
 #addingCardsButton {
