@@ -2,6 +2,22 @@ body {
     background: #99dffd;
 }
 
+#tList {
+    background-image: url('https://media.discordapp.net/attachments/1072969699987570728/1076922121441259600/giphy-229026899.gif');
+    background-repeat: repeat;
+    background-size: 110% 100%;
+}
+  
+#openingPage {
+    background-image: url('https://cdn.discordapp.com/attachments/1072969699987570728/1076921784353443941/source-2967208402.gif');
+    background-repeat: repeat;
+    background-size: 100% 230%;
+}
+
+#loginPage {
+    background-color: rgb(1, 1, 27);
+}
+
 .navbar {
     background-color: #02327a;
 }
@@ -70,8 +86,18 @@ body {
     line-height: 45px;
 }
 
-#tapwaterLogo {
+#tapwaterLogoMain {
     display: block;
+    width: 300px;
+    height: 300px;
+    margin: auto;
+}
+
+#tapwaterLogoLogin {
+    display: block;
+    width: 500px;
+    height: 500px;
+    opacity: 50%;
     margin: auto;
 }
 
@@ -100,10 +126,35 @@ body {
     color: rgb(43, 47, 125);
 }
 
-.aboutText {
-    text-align: center;
-    padding-top: 30px;
+.aboutContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
 }
+  
+.aboutText {
+    font-size: 21px;
+    color: white;
+    line-height: 1.5;
+    text-align: center;
+}
+
+  @media screen and (max-width: 991px) {
+    .aboutText {
+      font-size: 18px;
+      line-height: 1.4;
+    }
+  }
+  
+  @media screen and (max-width: 767.5px) {
+    .aboutText {
+      font-size: 24px;
+      line-height: 1.2;
+    }
+  }
+  
+  
 
 .bmd-layout-content {
     height: 100vh;
@@ -227,3 +278,21 @@ hr {
     min-width: 18rem;
     max-height: 28rem;
 }
+
+.slideshow-container {
+    position: relative;
+    overflow: hidden;
+}
+  
+.slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    float: left;
+    transition: transform 1s linear;
+}
+  
+.slide img {
+    width: 100%;
+    height: auto;
+}  
