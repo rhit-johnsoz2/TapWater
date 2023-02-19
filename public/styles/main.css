@@ -153,8 +153,6 @@ body {
       line-height: 1.2;
     }
   }
-  
-  
 
 .bmd-layout-content {
     height: 100vh;
@@ -228,24 +226,34 @@ body {
     z-index: 999;
 }
 
-#zoomOutButton {
+#tapButton {
     right: 10px;
-    bottom: 160px;
+    bottom: 360px;
 }
 
-#zoomInButton {
+#flipButton {
+    right: 10px;
+    bottom: 310px;
+}
+
+#zoomOutButton {
     right: 10px;
     bottom: 210px;
 }
 
+#zoomInButton {
+    right: 10px;
+    bottom: 260px;
+}
+
 #deletingCardButton {
     right: 10px;
-    bottom: 110px;
+    bottom: 160px;
 }
 
 #addingCardsButton {
     right: 10px;
-    bottom: 60px;
+    bottom: 110px;
 }
 
 #addingStacksButton {
