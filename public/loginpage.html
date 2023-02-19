@@ -15,13 +15,18 @@
   <nav class="navbar fixed-top"> 
     <a class="navbar-brand" href="/">TapWater</a>
   </nav>
-  <div id="loginPage" class="container page-container">
-    <img id="tapwaterLogo" src="images/templogo.png" alt="TapWater logo">
+
+  <div id="loginPage" style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <div style="position: relative;">
+      <img src="images/Bubble in Dark Space.png" alt="TapWater logo">
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+        <div id="firebaseui-auth-container" style="position: absolute; top: -60px;"></div>
+        <button id="roseFireButton" type="button" class="btn" style="top: 125px">Sign In to Rosefire</button>
+      </div>
+    </div>
   </div>
-
-  <div id="firebaseui-auth-container"></div>
-
-  <button id="roseFireButton" type="button" class="btn">Sign In to Rosefire</button>
+  
+  
 
   <script src="scripts/jquery.min.js"></script>
   <script src="scripts/popper.js"></script>
