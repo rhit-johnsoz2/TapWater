@@ -119,7 +119,7 @@ rhit.ImageCaption = class {
 }
 
 rhit.CardImage = class {
-	constructor(url, name, x, y, z, id, height, width) {
+	constructor(url, name, x, y, z, id, height, width, stackId) {
 		this.id = id
 		this.url = url
 		this.name = name
@@ -128,6 +128,7 @@ rhit.CardImage = class {
 		this.height = height
 		this.width = width
 		this.z = z
+		this.stackId = stackId
 		console.log("Created CardImage with name " + name + " and url " + url + 
 		". Has position X: " + this.posX + " and position Y: " + this.posY +
 		". Has height " + this.height + " and width " + this.width +
@@ -136,9 +137,11 @@ rhit.CardImage = class {
 }
 
 rhit.cardStack = class {
-	constructor(id, name) {
+	constructor(id, name, posX, posY) {
 		this.id = id;
 		this.name = name;
+		this.posX = posX;
+		this.posY = posY;
 		console.log("created stack id" + this.id);
 	}
 }
@@ -223,7 +226,10 @@ rhit.fbStacksManager = class {
 		console.log(`add name ${name}`);
 
 		this._ref.collection("stacks").add({
-			stackName: name
+			stackName: name,
+			stackX: 0,
+			stackY: 0,
+			lastTouched: firebase.firestore.Timestamp.now()
 		})
 		.catch(function (error) {
 			console.log("Error adding document: ", error);
@@ -246,7 +252,7 @@ rhit.fbStacksManager = class {
 	}
 	getStackAtIndex(index) {
 		const docSnapshot = this._documentSnapshots[index];
-		const s = new rhit.cardStack(docSnapshot.id, docSnapshot.get("stackName"))
+		const s = new rhit.cardStack(docSnapshot.id, docSnapshot.get("stackName"), docSnapshot.get("stackX"), docSnapshot.get("stackY"))
 		return s;
 	}
 	update(id, updatedName) {
@@ -284,6 +290,7 @@ rhit.fbCardImagesManager = class {
 			cardName: name,
 			cardX: 100,
 			cardY: 100,
+      stackId: "",
 			lastTouched: firebase.firestore.Timestamp.now(),
 			cardHeight: height,
 			cardWidth: width
@@ -340,7 +347,8 @@ rhit.fbCardImagesManager = class {
 			parseFloat(docSnapshot.get("cardZ")),
 			docSnapshot.id,
 			docSnapshot.get("cardHeight"),
-			docSnapshot.get("cardWidth")
+			docSnapshot.get("cardWidth"),
+			docSnapshot.get("stackId")
 		);
 		return mq;
 	}
@@ -569,6 +577,7 @@ rhit.DetailPageController = class {
 		}
 		const oldList = document.querySelector("#cards");
 		oldList.removeAttribute("id");
+		oldList.innerHTML = "";
 		oldList.hidden = true;
 		oldList.parentElement.appendChild(newList);
 
@@ -590,10 +599,10 @@ rhit.DetailPageController = class {
 
 	}
 	_createCard(cardImage) {
-		return htmlToElement(`<img class="draggable" data-id=${cardImage.id} width=${cardImage.width} height=${cardImage.height} src=${cardImage.url} alt="${cardImage.name}" style=" left: ${cardImage.posX}px; top: ${cardImage.posY}px; position: absolute; z-index: ${cardImage.z};">`);
+		return htmlToElement(`<img class="draggable" data-id=${cardImage.id} width=${cardImage.width} height=${cardImage.height} src=${cardImage.url} alt="${cardImage.name}" style=" left: ${cardImage.posX}px; top: ${cardImage.posY}px; position: absolute; z-index: ${cardImage.z};" stack-id="${cardImage.stackId}">`);
 	}
 	_createStack(stackName) {
-		return htmlToElement(`<div class="card cardStack draggable position-absolute">
+		return htmlToElement(`<div class="card cardStack draggable position-absolute" id="${stackName.id}" style=" left: ${stackName.posX}px; top: ${stackName.posY}px; position: absolute; z-index: 0;">
 		<div class="card-body">
 		  <ul class="nav nav-pills card-header-pills justify-content-between">
 			<li class="nav-item">
@@ -923,18 +932,28 @@ class Draggable {
 		}
 	}
 
-	setPositions() {
+	setPositions(e) {
 		const elRect = this.el.getBoundingClientRect()
 		this.el.posX = elRect.left
 		this.el.posY = elRect.top
 		console.log("Card " + this.el.getAttribute('alt') + "'s New Position X: " + this.el.posX + ", Position Y: " + this.el.posY)
-		//if(this.el.collection == 'cards') {
+		if (this.el.nodeName == 'IMG') {
+			for (let el of document.querySelectorAll('.cardStack')) {
+				let rect = el.getBoundingClientRect();
+				if (e.clientX > rect.left && e.clientX < rect.right && e.clientY > rect.top && e.clientY < rect.bottom){
+					this.el.setAttribute('stack-id', el.id);
+					break;
+				} else {
+					this.el.setAttribute('stack-id', "");
+				}
+			}
 			const docRef = firebase.firestore().collection('TapWater').doc(new URLSearchParams(window.location.search).get('id')).collection('cards').doc(this.el.getAttribute('data-id'))
 			docRef.update({
 				cardX: this.el.posX,
 				cardY: this.el.posY,
 				cardZ: this.el.style.zIndex,
-				lastTouched: firebase.firestore.Timestamp.now()
+				lastTouched: firebase.firestore.Timestamp.now(),
+				stackId: this.el.getAttribute('stack-id')
 			})
 			.then(() => {
 				console.log('Stored position!')
@@ -942,10 +961,32 @@ class Draggable {
 			.catch((error) => {
 				console.error('Error updating document: ', error)
 			})
-		//}
-		// else if(this.el.collection == 'stacks') {
-		// 	console.log('its stacking time')
-		// }
+		} else {
+			for (let el of document.querySelectorAll(`[stack-id="${this.el.id}"]`)) {
+				let imgDocRef = firebase.firestore().collection('TapWater').doc(new URLSearchParams(window.location.search).get('id')).collection('cards').doc(el.getAttribute('data-id'))
+				let imgRect = el.getBoundingClientRect();
+				el.posX = imgRect.left
+				el.posY = imgRect.top
+				console.log(el.posX)
+				console.log(el.posY)
+				imgDocRef.update({
+					cardX: this.el.posX,
+					cardY: this.el.posY
+				})
+			}
+			const docRef = firebase.firestore().collection('TapWater').doc(new URLSearchParams(window.location.search).get('id')).collection('stacks').doc(this.el.id)
+			docRef.update({
+				stackX: this.el.posX,
+				stackY: this.el.posY,
+				lastTouched: firebase.firestore.Timestamp.now()
+			})
+			.then(() => {				
+				console.log('Stored position!')
+			})
+			.catch((error) => {
+				console.error('Error updating document: ', error)
+			})
+		}
 	}
 	
 	moveElementTo(x, y) {
@@ -953,6 +994,12 @@ class Draggable {
 		const topPosition = y - this.shiftY < 0 ? 0 : y - this.shiftY
 		this.el.style.left = `${leftPosition}px`
 		this.el.style.top = `${topPosition}px`
+		if (this.el.nodeName == 'DIV') {
+			for (let el of document.querySelectorAll(`[stack-id=${this.el.id}]`)) {
+				el.style.left = `${leftPosition}px`
+				el.style.top = `${topPosition}px`
+			}
+		}
 	}
 	
 	onMouseMove(e) {
@@ -961,7 +1008,7 @@ class Draggable {
 	
 	onMouseUp(e) {
 		document.removeEventListener('mousemove', this.onMouseMove)
-		this.setPositions();
+		this.setPositions(e);
 	}
 	
 }
