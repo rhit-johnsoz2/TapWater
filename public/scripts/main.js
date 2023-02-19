@@ -225,7 +225,7 @@ rhit.fbStacksManager = class {
 	add(name) {
 		console.log(`add name ${name}`);
 
-		this._ref.collection("stacks").add({
+		 return this._ref.collection("stacks").add({
 			stackName: name,
 			stackX: 0,
 			stackY: 0,
@@ -391,7 +391,7 @@ rhit.DetailPageController = class {
 
 					const currentWidth = firstDocument.data().cardWidth;
 					const currentHeight = firstDocument.data().cardHeight;
-					const increasePercentage = 5; // increase by 20% of current dimensions
+					const increasePercentage = 5; // increase by 5% of current dimensions
 					const newWidth = Math.round(currentWidth * (1 + increasePercentage/100));
 					const newHeight = Math.round(currentHeight * (1 + increasePercentage/100));
 					
@@ -723,6 +723,7 @@ rhit.fbSingleImageManager = class {
 		const metadata = {
 			"content-type": file.type
 		};
+		let image;
 		const storageRef = firebase.storage().ref().child(this._captionId+"/"+file.name);
 		storageRef.put(file, metadata).then((uploadSnapshot) => {
 			storageRef.getDownloadURL().then((downloadURL) => {
@@ -731,12 +732,13 @@ rhit.fbSingleImageManager = class {
 				  	const width = this.naturalWidth;
 				  	const height = this.naturalHeight;
 				  	console.log(`Image size: ${width} x ${height}`);
-				  	rhit.fbCardImagesManager.add(downloadURL, file.name, height, width);
+				  	image = rhit.fbCardImagesManager.add(downloadURL, file.name, height, width);
 				};
 				img.src = URL.createObjectURL(file);
 			});
 		});
 		console.log("upload:", file.name);
+		return image;
 	}
 	delete() {
 		return this._ref.delete();
@@ -964,7 +966,9 @@ class Draggable {
 	// sets card being clicked to the front
 	prepareElement() {
 		//this.el.style.position = 'absolute'
-		this.el.style.zIndex = 999
+		if (this.el.nodeName == 'IMG') {
+			this.el.style.zIndex = 999
+		}
 	}
 
 	// need to go through every other card and set them to the back
@@ -989,7 +993,21 @@ class Draggable {
 				let rect = el.getBoundingClientRect();
 				if (e.clientX > rect.left && e.clientX < rect.right && e.clientY > rect.top && e.clientY < rect.bottom){
 					this.el.setAttribute('stack-id', el.id);
-					break;
+					let imgDocRef = firebase.firestore().collection('TapWater').doc(new URLSearchParams(window.location.search).get('id')).collection('cards').doc(this.el.getAttribute('data-id'))
+					console.log(rect.left)
+					console.log(rect.top)
+					this.el.style.left = rect.left;
+					this.el.style.top = rect.top;
+					imgDocRef.update({
+						cardX: rect.left + 15,
+						cardY: rect.top + 42.8 + 15,
+						cardWidth: rect.width - 30,
+						cardHeight: elRect.height * (rect.width - 30) / elRect.width,
+						cardZ: this.el.style.zIndex,
+						lastTouched: firebase.firestore.Timestamp.now(),
+						stackId: this.el.getAttribute('stack-id')
+					})
+					return;
 				} else {
 					this.el.setAttribute('stack-id', "");
 				}
@@ -1012,13 +1030,9 @@ class Draggable {
 			for (let el of document.querySelectorAll(`[stack-id="${this.el.id}"]`)) {
 				let imgDocRef = firebase.firestore().collection('TapWater').doc(new URLSearchParams(window.location.search).get('id')).collection('cards').doc(el.getAttribute('data-id'))
 				let imgRect = el.getBoundingClientRect();
-				el.posX = imgRect.left
-				el.posY = imgRect.top
-				console.log(el.posX)
-				console.log(el.posY)
 				imgDocRef.update({
-					cardX: this.el.posX,
-					cardY: this.el.posY
+					cardX: this.el.posX + 15,
+					cardY: this.el.posY + 42.8 + 15,
 				})
 			}
 			const docRef = firebase.firestore().collection('TapWater').doc(new URLSearchParams(window.location.search).get('id')).collection('stacks').doc(this.el.id)
@@ -1042,9 +1056,9 @@ class Draggable {
 		this.el.style.left = `${leftPosition}px`
 		this.el.style.top = `${topPosition}px`
 		if (this.el.nodeName == 'DIV') {
-			for (let el of document.querySelectorAll(`[stack-id="${this.el.id}"]`)) {
-				el.style.left = `${leftPosition}px`
-				el.style.top = `${topPosition}px`
+			for (let el of document.querySelectorAll(`[stack-id=${this.el.id}]`)) {
+				el.style.left = `${leftPosition + 15}px`
+				el.style.top = `${topPosition + 42.8 + 15}px`
 			}
 			document.querySelector(`[stack="${this.el.id}"]`).setAttribute('style', `position: absolute; left: ${leftPosition + 234}px; top: ${topPosition}px; zIndex: 999;`)
 			console.log(document.querySelector(`#${this.el.id} .fake-button`).getBoundingClientRect()) 
