@@ -749,7 +749,10 @@ rhit.DetailPageController = class {
 						firebase.firestore().collection('TapWater').doc(new URLSearchParams(window.location.search).get('id')).collection('cards').doc(el.getAttribute('data-id')).update({
 							lastTouched: firebase.firestore.Timestamp.now()
 						})
-    }
+				})
+			}})
+		}
+    
 		for (let queries of document.querySelectorAll(".menuShuffle")) {
 			queries.addEventListener("click", (event) => {
 				for (let el of document.querySelectorAll(`[stack-id="${queries.getAttribute('data-id')}"]`)) {
