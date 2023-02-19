@@ -142,7 +142,7 @@ rhit.cardStack = class {
 		this.name = name;
 		this.posX = posX;
 		this.posY = posY;
-		console.log("created stack id" + this.id);
+		console.log("created stack id: " + this.id);
 	}
 }
 
@@ -473,6 +473,43 @@ rhit.DetailPageController = class {
 		document.querySelector("#addingStacksButton").addEventListener("click", (event) => {
 			rhit.fbStacksManager.add("New Stack");
 		})
+		
+		document.addEventListener('DOMContentLoaded', () => {
+			const cardStack = document.querySelector('.cardStack');
+			const dropdownMenu = document.querySelector('.dropdown-menu-right');
+			let isDragging = false;
+			let mouseOffsetX = 0;
+			let mouseOffsetY = 0;
+			cardStack.querySelector('.stackName').addEventListener('mousedown', (event) => {
+				isDragging = true;
+				mouseOffsetX = event.clientX - cardStack.offsetLeft;
+				mouseOffsetY = event.clientY - cardStack.offsetTop;
+			});
+			document.addEventListener('mousemove', (event) => {
+				if(isDragging) {
+					cardStack.style.left = (event.clientX - mouseOffsetX) + 'px';
+					cardStack.style.top = (event.clientY - mouseOffsetY) + 'px';
+					dropdownMenu.style.left = (event.clientX - mouseOffsetX) + 'px';
+					dropdownMenu.style.top = (event.clientY - mouseOffsetY + cardStack.offsetHeight) + 'px';
+				}
+			});
+			document.addEventListener('mouseup', () => {
+				isDragging = false;
+				console.log("Inside mouse up");
+			});
+		})
+
+		document.addEventListener('DOMContentLoaded', () => {
+			const dropdownMenu = document.querySelector('.dropdown-menu-right');
+			const menuButton = document.querySelector('#lr2');
+			console.log("Testing");
+			if(dropdownMenu && menuButton) {
+				console.log("I was clicked");
+				menuButton.addEventListener('click', () => {
+					dropdownMenu.classList.toggle('show');
+				});
+			}
+		})
 
 		document.querySelector("#fileInput").addEventListener("change", (event) => {
 			const files = event.target.files;
@@ -588,7 +625,16 @@ rhit.DetailPageController = class {
 
 		for (let queries of document.querySelectorAll(".menuEdit")) {
 			queries.addEventListener("click", (event) => {
+
+				// for (let el of document.querySelectorAll('.cardStack')) {
+				// 	console.log(el.getAttribute('stack-id'))
+				// }
+
 				document.querySelector("#internalStackId").innerText = queries.getAttribute('data-id');
+				console.log(queries.getAttribute('data-id'));
+				// const modalTrigger = document.querySelector(`[data-id="${queries.getAttribute('data-id')}"] [data-target="#editStackDialog"]`);
+				// console.log(modalTrigger)
+  				// modalTrigger.click()		  
 			})
 		}
 		for (let queries of document.querySelectorAll(".menuDelete")) {
@@ -602,14 +648,20 @@ rhit.DetailPageController = class {
 		return htmlToElement(`<img class="draggable" data-id=${cardImage.id} width=${cardImage.width} height=${cardImage.height} src=${cardImage.url} alt="${cardImage.name}" style=" left: ${cardImage.posX}px; top: ${cardImage.posY}px; position: absolute; z-index: ${cardImage.z};" stack-id="${cardImage.stackId}">`);
 	}
 	_createStack(stackName) {
-		return htmlToElement(`<div class="card cardStack draggable position-absolute" id="${stackName.id}" style=" left: ${stackName.posX}px; top: ${stackName.posY}px; position: absolute; z-index: 0;">
+		return htmlToElement(`<div><div class="card cardStack draggable position-absolute" id="${stackName.id}" style=" left: ${stackName.posX}px; top: ${stackName.posY}px; position: absolute; z-index: 0;">
 		<div class="card-body">
 		  <ul class="nav nav-pills card-header-pills justify-content-between">
 			<li class="nav-item">
 			  <a class="stackName">${stackName.name}</a>
 			</li>
-			<li class="nav-item">
-			  <a class="dropdown pull-xs-right">
+			<li class="nav-item fake-button">
+				<i id="options" class="material-icons stackMenu">more_vert</i>
+			</li>
+		  </ul>
+		  <hr>
+		</div>
+	  </div>
+	  <div class="dropdown pull-xs-right" stack="${stackName.id}" style=" left: ${stackName.posX + 250}px; top: ${stackName.posY + 3}px; position: absolute; z-index: 1;">
 				<button class="btn bmd-btn-icon dropdown-toggle" type="button" id="lr2" data-toggle="dropdown" aria-haspopup="true">
 				  <i id="options" class="material-icons stackMenu">more_vert</i>
 				</button>
@@ -620,12 +672,7 @@ rhit.DetailPageController = class {
 				  <button class="dropdown-item menuEdit" type="button" data-toggle="modal" data-target="#editStackDialog" data-id="${stackName.id}"><i class="material-icons">edit</i>&nbsp;&nbsp;&nbsp;Edit Name</button>
 				  <button class="dropdown-item menuDelete" type="button" data-toggle="modal" data-target="#deleteStackDialog" data-id="${stackName.id}"><i class="material-icons">delete</i>&nbsp;&nbsp;&nbsp;Delete</button>
 				</div>
-			  </a>
-			</li>
-		  </ul>
-		  <hr>
-		</div>
-	  </div>`)
+	  </div></div>`)
 	}
 }
 
@@ -1013,6 +1060,8 @@ class Draggable {
 				el.style.left = `${leftPosition + 15}px`
 				el.style.top = `${topPosition + 42.8 + 15}px`
 			}
+			document.querySelector(`[stack="${this.el.id}"]`).setAttribute('style', `position: absolute; left: ${leftPosition + 234}px; top: ${topPosition}px; zIndex: 999;`)
+			console.log(document.querySelector(`#${this.el.id} .fake-button`).getBoundingClientRect()) 
 		}
 	}
 	
@@ -1027,3 +1076,38 @@ class Draggable {
 	
 }
 
+// Try for shuffling a stack
+function shuffle(array) {
+	let currentIndex = array.length, temporaryValue, randomIndex;
+  
+	// While there remain elements to shuffle
+	while (currentIndex !== 0) {
+	  // Pick a remaining element
+	  randomIndex = Math.floor(Math.random() * currentIndex);
+	  currentIndex--;
+  
+	  // Swap it with the current element
+	  temporaryValue = array[currentIndex];
+	  array[currentIndex] = array[randomIndex];
+	  array[randomIndex] = temporaryValue;
+	}
+  
+	return array;
+  }
+  
+  // Get the collection reference
+  const collectionRef = firebase.firestore().collection('myCollection');
+  
+  // Retrieve the documents
+  collectionRef.get().then((querySnapshot) => {
+	// Map the query snapshot to an array of document data
+	const data = querySnapshot.docs.map((doc) => doc.data());
+  
+	// Shuffle the data
+	const shuffledData = shuffle(data);
+  
+	// Write the shuffled data back to Firestore
+	for (let i = 0; i < shuffledData.length; i++) {
+	  collectionRef.doc(querySnapshot.docs[i].id).set(shuffledData[i]);
+	}
+  });
