@@ -119,7 +119,7 @@ rhit.ImageCaption = class {
 }
 
 rhit.CardImage = class {
-	constructor(url, name, x, y, z, id, height, width, stackId) {
+	constructor(url, name, x, y, z, id, height, width, stackId, rotate, backUrl) {
 		this.id = id
 		this.url = url
 		this.name = name
@@ -129,10 +129,13 @@ rhit.CardImage = class {
 		this.width = width
 		this.z = z
 		this.stackId = stackId
+		this.rotate = rotate
+		this.backUrl = backUrl
 		console.log("Created CardImage with name " + name + " and url " + url + 
 		". Has position X: " + this.posX + " and position Y: " + this.posY +
 		". Has height " + this.height + " and width " + this.width +
-		". zIndex is " + this.z + " and Id is " + this.id)
+		". zIndex is " + this.z + " and Id is " + this.id + 
+		". Rotation is " + this.rotate + " and card back url is " + this.backUrl)
 	}
 }
 
@@ -290,10 +293,12 @@ rhit.fbCardImagesManager = class {
 			cardName: name,
 			cardX: 100,
 			cardY: 100,
-      stackId: "",
+      		stackId: "",
 			lastTouched: firebase.firestore.Timestamp.now(),
 			cardHeight: height,
-			cardWidth: width
+			cardWidth: width,
+			cardRotation: 0,
+			cardBackUrl: "https://c4.wallpaperflare.com/wallpaper/540/668/924/water-ocean-waves-sea-high-resolution-pictures-wallpaper-preview.jpg"
 		})
 		.catch(function (error) {
 			console.log("Error adding document: ", error);
@@ -348,7 +353,9 @@ rhit.fbCardImagesManager = class {
 			docSnapshot.id,
 			docSnapshot.get("cardHeight"),
 			docSnapshot.get("cardWidth"),
-			docSnapshot.get("stackId")
+			docSnapshot.get("stackId"),
+			docSnapshot.get("cardRotation"),
+			docSnapshot.get("cardBackUrl")
 		);
 		return mq;
 	}
@@ -382,6 +389,73 @@ rhit.DetailPageController = class {
 		// .catch((error) => {
 		// 	console.error('Error updating document: ', error)
 		// })
+
+		// const object = document.querySelectorAll('cards')
+		// let angle = 0;
+		// document.addEventListener("keydown", (event) => {
+		// 	if (event.key === "t") {
+		// 	  angle += 90;
+		// 	  object.style.transform = `rotate(${angle}deg)`
+		// 	}
+		// })
+
+		document.querySelector("#tapButton").addEventListener("click", (event) => {
+			let query = this._ref.collection("cards").orderBy("lastTouched", "desc").limit(1)
+			query.get().then((querySnapshot) => {
+				if (!querySnapshot.empty) {
+				  	const firstDocument = querySnapshot.docs[0];
+					
+					const currentAngle = firstDocument.data().cardRotation;
+					var newAngle = currentAngle + 90;
+					if(newAngle >= 180) {
+						newAngle = 0;
+					}
+
+					firstDocument.ref.update({
+						cardRotation: newAngle,
+						lastTouched: firebase.firestore.Timestamp.now()
+					})
+					.then(() => {
+						console.log('rotated')
+					})
+					.catch((error) => {
+						console.error('Error updating document: ', error)
+					})
+				} else {
+				  	console.log("No documents found.")
+				}
+			}).catch((error) => {
+				console.error("Error getting documents:", error)
+			});
+		});
+
+		document.querySelector("#flipButton").addEventListener("click", (event) => {
+			let query = this._ref.collection("cards").orderBy("lastTouched", "desc").limit(1)
+			query.get().then((querySnapshot) => {
+				if (!querySnapshot.empty) {
+				  	const firstDocument = querySnapshot.docs[0];
+					
+					const oldCardBackUrl = firstDocument.data().cardUrl;
+					const newCardBackUrl = firstDocument.data().cardBackUrl;
+
+					firstDocument.ref.update({
+						cardUrl: newCardBackUrl,
+						cardBackUrl: oldCardBackUrl,
+						lastTouched: firebase.firestore.Timestamp.now()
+					})
+					.then(() => {
+						console.log('flipped')
+					})
+					.catch((error) => {
+						console.error('Error updating document: ', error)
+					})
+				} else {
+				  	console.log("No documents found.")
+				}
+			}).catch((error) => {
+				console.error("Error getting documents:", error)
+			});
+		});
 
 		document.querySelector("#zoomInButton").addEventListener("click", (event) => {
 			let query = this._ref.collection("cards").orderBy("lastTouched", "desc").limit(1)
@@ -645,7 +719,7 @@ rhit.DetailPageController = class {
 
 	}
 	_createCard(cardImage) {
-		return htmlToElement(`<img class="draggable" data-id=${cardImage.id} width=${cardImage.width} height=${cardImage.height} src=${cardImage.url} alt="${cardImage.name}" style=" left: ${cardImage.posX}px; top: ${cardImage.posY}px; position: absolute; z-index: ${cardImage.z};" stack-id="${cardImage.stackId}">`);
+		return htmlToElement(`<img class="draggable" data-id=${cardImage.id} width=${cardImage.width} height=${cardImage.height} src=${cardImage.url} alt="${cardImage.name}" style=" left: ${cardImage.posX}px; top: ${cardImage.posY}px; position: absolute; z-index: ${cardImage.z}; transform:rotate(${cardImage.rotate}deg);" stack-id="${cardImage.stackId}">`);
 	}
 	_createStack(stackName) {
 		return htmlToElement(`<div><div class="card cardStack draggable position-absolute" id="${stackName.id}" style=" left: ${stackName.posX}px; top: ${stackName.posY}px; position: absolute; z-index: 0;">
