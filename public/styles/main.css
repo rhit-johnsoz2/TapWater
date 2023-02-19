@@ -17,7 +17,16 @@ body {
 #fabAdd {
     position: absolute;
     right: 20px;
-    bottom: 15px;
+    bottom: 20px;
+    background: #02327a;
+    color: #99dffd;
+    z-index: 999;
+}
+
+#fabEdit {
+    position: absolute;
+    right: 20px;
+    bottom: 90px;
     background: #02327a;
     color: #99dffd;
     z-index: 999;
@@ -26,7 +35,7 @@ body {
 #fabDelete {
     position: absolute;
     right: 20px;
-    bottom: 570px;
+    bottom: 160px;
     background: #02327a;
     color: #99dffd;
     z-index: 999;
@@ -170,12 +179,17 @@ body {
 
 #zoomOutButton {
     right: 10px;
-    bottom: 110px;
+    bottom: 160px;
 }
 
 #zoomInButton {
     right: 10px;
-    bottom: 160px;
+    bottom: 210px;
+}
+
+#deletingCardButton {
+    right: 10px;
+    bottom: 110px;
 }
 
 #addingCardsButton {

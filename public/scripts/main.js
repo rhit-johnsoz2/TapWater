@@ -53,6 +53,19 @@ rhit.ListPageController = class {
 			document.querySelector("#inputName").focus();
 		});
 
+		$("deleteImageDialog").on("show.bs.modal", (event) => {
+			//pre animation
+			console.log("dialog about to show up");
+			//document.querySelector("#inputImage").value = "";
+			document.querySelector("#inputName").value = "";
+		});
+		$("deleteImageDialog").on("shown.bs.modal", (event) => { 
+			//post animation
+			console.log("dialog is now visible");
+			document.querySelector("#inputName").focus();
+		});
+
+
 		//Start listening
 		rhit.fbImageCaptionsManager.beginListening(this.updateList.bind(this));
 
@@ -260,7 +273,7 @@ rhit.fbCardImagesManager = class {
 		this._unsubscribe = null;
 	}
 	
-	add(url, name) {
+	add(url, name, height, width) {
 		console.log(`add url ${url}`);
 		console.log(`add name of the file ${name}`);
 		//console.log(`add x position ${x}`);
@@ -269,9 +282,11 @@ rhit.fbCardImagesManager = class {
 		this._ref.collection("cards").add({
 			cardUrl: url,
 			cardName: name,
-			cardX :'0',
-			cardY : '0',
-			lastTouched: firebase.firestore.Timestamp.now()
+			cardX: 100,
+			cardY: 100,
+			lastTouched: firebase.firestore.Timestamp.now(),
+			cardHeight: height,
+			cardWidth: width
 		})
 		.catch(function (error) {
 			console.log("Error adding document: ", error);
@@ -336,20 +351,111 @@ rhit.DetailPageController = class {
 	constructor() {
 		console.log("Made the detail page controller");
 
+		const urlParams = new URLSearchParams(window.location.search);
+		const ImageCaptionId = urlParams.get("id");
+		this._ref = firebase.firestore().collection(rhit.FB_COLLECTION_TAPWATER).doc(ImageCaptionId);
+
+		// const elements = document.querySelectorAll('.some-selector');
+		// const sortedElements = Array.from(elements).sort((a, b) => a.textContent.localeCompare(b.textContent)); // Sort by text content
+		// const firstElement = sortedElements[0]; // Access the first element
+
+		//let query = this._ref.collection("cards").orderBy("lastTouched", "asc").limit(1);
+
+		// const docRef = firebase.firestore().collection('TapWater').doc(new URLSearchParams(window.location.search).get('id')).collection('cards').doc(this.el.getAttribute('data-id'))
+		// docRef.update({
+		// 	cardX: this.el.posX,
+		// 	cardY: this.el.posY,
+		// 	cardZ: this.el.style.zIndex,
+		// 	lastTouched: firebase.firestore.Timestamp.now()
+		// })
+		// .then(() => {
+		// 	console.log('Stored position!')
+		// })
+		// .catch((error) => {
+		// 	console.error('Error updating document: ', error)
+		// })
+
 		document.querySelector("#zoomInButton").addEventListener("click", (event) => {
-			const cards = document.querySelectorAll('.draggable')
-			for (let card of cards) {
-				card.width += 20
-				card.height += 20
-			}
+			let query = this._ref.collection("cards").orderBy("lastTouched", "desc").limit(1)
+			query.get().then((querySnapshot) => {
+				if (!querySnapshot.empty) {
+				  	const firstDocument = querySnapshot.docs[0];
+
+					const currentWidth = firstDocument.data().cardWidth;
+					const currentHeight = firstDocument.data().cardHeight;
+					const increasePercentage = 5; // increase by 20% of current dimensions
+					const newWidth = Math.round(currentWidth * (1 + increasePercentage/100));
+					const newHeight = Math.round(currentHeight * (1 + increasePercentage/100));
+					
+					firstDocument.ref.update({
+						cardHeight: newHeight,
+						cardWidth: newWidth,
+						lastTouched: firebase.firestore.Timestamp.now()
+					})
+					.then(() => {
+						console.log('zoomed in')
+					})
+					.catch((error) => {
+						console.error('Error updating document: ', error)
+					})
+				} else {
+				  	console.log("No documents found.")
+				}
+			}).catch((error) => {
+				console.error("Error getting documents:", error)
+			});
 		});
 
 		document.querySelector("#zoomOutButton").addEventListener("click", (event) => {
-			const cards = document.querySelectorAll('.draggable')
-			for (let card of cards) {
-				card.width -= 20
-				card.height -= 20
-			}
+			let query = this._ref.collection("cards").orderBy("lastTouched", "desc").limit(1)
+			query.get().then((querySnapshot) => {
+				if (!querySnapshot.empty) {
+				  	const firstDocument = querySnapshot.docs[0];
+
+					const currentWidth = firstDocument.data().cardWidth;
+					const currentHeight = firstDocument.data().cardHeight;
+					const increasePercentage = 5; // increase by 10% of current dimensions
+					const newWidth = Math.round(currentWidth * (1 - increasePercentage/100));
+					const newHeight = Math.round(currentHeight * (1 - increasePercentage/100));
+
+					firstDocument.ref.update({
+						cardHeight: newHeight,
+						cardWidth: newWidth,
+						lastTouched: firebase.firestore.Timestamp.now()
+					})
+					.then(() => {
+						console.log('zoomed in')
+					})
+					.catch((error) => {
+						console.error('Error updating document: ', error)
+					})
+				} else {
+				  	console.log("No documents found.")
+				}
+			}).catch((error) => {
+				console.error("Error getting documents:", error)
+			});
+		});
+
+		document.querySelector("#deletingCardButton").addEventListener("click", (event) => {
+			//rhit.fbStacksManager.delete(document.querySelector("#deleteStackId").innerText);
+			let query = this._ref.collection("cards").orderBy("lastTouched", "desc").limit(1)
+			query.get().then((querySnapshot) => {
+				if (!querySnapshot.empty) {
+				  	const firstDocument = querySnapshot.docs[0];
+					firstDocument.ref.delete()
+					.then(() => {
+						console.log('deleted card')
+					})
+					.catch((error) => {
+						console.error('Error updating document: ', error)
+					})
+				} else {
+				  	console.log("No documents found.")
+				}
+			}).catch((error) => {
+				console.error("Error getting documents:", error)
+			});
 		});
 
 		document.querySelector("#addingCardsButton").addEventListener("click", (event) => {
@@ -390,7 +496,7 @@ rhit.DetailPageController = class {
 		$("editImageDialog").on("show.bs.modal", (event) => {
 			//pre animation
 			console.log("dialog about to show up");
-			//document.querySelector("#inputImage").src = rhit.fbSingleImageManager.image;
+			document.querySelector("#inputImage").src = rhit.fbSingleImageManager.image;
 			document.querySelector("#inputName").value = rhit.fbSingleImageManager.caption;
 		});
 		$("editImageDialog").on("shown.bs.modal", (event) => {
@@ -564,8 +670,14 @@ rhit.fbSingleImageManager = class {
 		const storageRef = firebase.storage().ref().child(this._captionId+"/"+file.name);
 		storageRef.put(file, metadata).then((uploadSnapshot) => {
 			storageRef.getDownloadURL().then((downloadURL) => {
-				//add to table
-				rhit.fbCardImagesManager.add(downloadURL, file.name);
+				const img = new Image();
+				img.onload = function() {
+				  	const width = this.naturalWidth;
+				  	const height = this.naturalHeight;
+				  	console.log(`Image size: ${width} x ${height}`);
+				  	rhit.fbCardImagesManager.add(downloadURL, file.name, height, width);
+				};
+				img.src = URL.createObjectURL(file);
 			});
 		});
 		console.log("upload:", file.name);

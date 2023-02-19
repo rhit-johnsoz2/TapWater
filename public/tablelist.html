@@ -42,6 +42,10 @@
     <i class="material-icons">add</i>
   </button>
 
+  <button id="fabEdit" type="button" class="btn bmd-btn-fab" data-toggle="modal" data-target="#editImageDialog">
+    <i class="material-icons">edit</i>
+  </button>
+
   <button id="fabDelete" type="button" class="btn bmd-btn-fab" data-toggle="modal" data-target="#deleteImageDialog">
     <i class="material-icons">delete</i>
   </button>
@@ -56,7 +60,7 @@
         <div class="modal-body">
             <div class="row">
               <div class="col">
-                <input id="inputimage" type="text" class="form-control" placeholder="Image">
+                <input id="inputImage" type="text" class="form-control" placeholder="Image">
               </div>
             </div>
             <div class="row">
@@ -69,6 +73,29 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">CANCEL</button>
           <button id="submitAddImage" type="button" class="btn btn-primary" data-dismiss="modal">CREATE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="editImageDialog" tabindex="-1" role="dialog" aria-labelledby="Edit image dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Table</h5>
+        </div>
+        <div class="modal-body">
+          
+            <div class="row">
+              <div class="col">
+                <input type="text" class="form-control" id="inputName" placeholder="Name">
+              </div>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">CANCEL</button>
+          <button id="submitAddImage" type="button" class="btn btn-primary" data-dismiss="modal">EDIT</button>
         </div>
       </div>
     </div>
