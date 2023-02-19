@@ -128,7 +128,7 @@ rhit.CardImage = class {
 		console.log("Created CardImage with name " + name + " and url " + url + 
 		". Has position X: " + this.posX + " and position Y: " + this.posY +
 		". Has height " + this.height + " and width " + this.width +
-		". zIndex is " + this.z + this.id)
+		". zIndex is " + this.z + " and Id is " + this.id)
 	}
 }
 
@@ -280,7 +280,8 @@ rhit.fbCardImagesManager = class {
 			cardUrl: url,
 			cardName: name,
 			cardX :'0',
-			cardY : '0'
+			cardY : '0',
+			lastTouched: firebase.firestore.Timestamp.now()
 		})
 		.catch(function (error) {
 			console.log("Error adding document: ", error);
@@ -288,7 +289,7 @@ rhit.fbCardImagesManager = class {
 	}
 
 	beginListening(changeListener) {
-		let query = this._ref.collection("cards").orderBy("cardName", "desc");
+		let query = this._ref.collection("cards").orderBy("lastTouched", "asc");
 		this._unsubscribe = query.onSnapshot((querySnapshot) => {
 				console.log("Card update!");
 				this._documentSnapshots = querySnapshot.docs;
@@ -331,7 +332,7 @@ rhit.fbCardImagesManager = class {
 			docSnapshot.get("cardName"),
 			parseFloat(docSnapshot.get("cardX")),
 			parseFloat(docSnapshot.get("cardY")),
-			0,
+			parseFloat(docSnapshot.get("cardZ")),
 			docSnapshot.id
 		);
 		return mq;
@@ -478,7 +479,7 @@ rhit.DetailPageController = class {
 		return htmlToElement(`<img class="draggable" data-id=${cardImage.id} width=${cardImage.width} height=${cardImage.height} src=${cardImage.url} alt="${cardImage.name}" style=" left: ${cardImage.posX}px; top: ${cardImage.posY}px; position: absolute; z-index: ${cardImage.z};">`);
 	}
 	_createStack(stackName) {
-		return htmlToElement(`    <div class="card cardStack draggable">
+		return htmlToElement(`<div class="card cardStack draggable">
 		<div class="card-body">
 		  <ul class="nav nav-pills card-header-pills justify-content-between">
 			<li class="nav-item">
@@ -785,7 +786,7 @@ class Draggable {
 	
 	// sets card being clicked to the front
 	prepareElement() {
-		this.el.style.position = 'absolute'
+		//this.el.style.position = 'absolute'
 		this.el.style.zIndex = 999
 	}
 
@@ -795,7 +796,7 @@ class Draggable {
 		for (let card of cards) {
 			// check if the current card is the element being clicked
 			// if not, set its z-index to 0
-			if(card.getAttribute('alt') != this.el.getAttribute('alt')) {
+			if(card.getAttribute('alt') != this.el.getAttribute('alt') && card.style.zIndex > 0) {
 				card.style.zIndex -= 1
 			}
 		}
@@ -806,17 +807,24 @@ class Draggable {
 		this.el.posX = elRect.left
 		this.el.posY = elRect.top
 		console.log("Card " + this.el.getAttribute('alt') + "'s New Position X: " + this.el.posX + ", Position Y: " + this.el.posY)
-		const docRef = firebase.firestore().collection('TapWater').doc(new URLSearchParams(window.location.search).get('id')).collection('cards').doc(this.el.getAttribute('data-id'))
-		docRef.update({
-			cardX: this.el.posX,
-			cardY: this.el.posY
-		})
-		.then(() => {
-			console.log('Stored position!')
-		})
-		.catch((error) => {
-			console.error('Error updating document: ', error)
-		})
+		//if(this.el.collection == 'cards') {
+			const docRef = firebase.firestore().collection('TapWater').doc(new URLSearchParams(window.location.search).get('id')).collection('cards').doc(this.el.getAttribute('data-id'))
+			docRef.update({
+				cardX: this.el.posX,
+				cardY: this.el.posY,
+				cardZ: this.el.style.zIndex,
+				lastTouched: firebase.firestore.Timestamp.now()
+			})
+			.then(() => {
+				console.log('Stored position!')
+			})
+			.catch((error) => {
+				console.error('Error updating document: ', error)
+			})
+		//}
+		// else if(this.el.collection == 'stacks') {
+		// 	console.log('its stacking time')
+		// }
 	}
 	
 	moveElementTo(x, y) {
