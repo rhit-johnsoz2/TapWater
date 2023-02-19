@@ -642,6 +642,15 @@ rhit.DetailPageController = class {
 				document.querySelector("#deleteStackId").innerText = queries.getAttribute('data-id');
 			})
 		}
+		for (let queries of document.querySelectorAll(".menuShuffle")) {
+			queries.addEventListener("click", (event) => {
+				for (let el of document.querySelectorAll(`[stack-id="${queries.getAttribute('data-id')}"]`)) {
+					this._ref.collection('cards').doc(el.getAttribute('data-id')).update({
+						lastTouched: new firebase.firestore.Timestamp(firebase.firestore.Timestamp.now().seconds - Math.random() * 1000, 0)
+					})
+				}
+			})
+		}
 
 	}
 	_createCard(cardImage) {
@@ -650,24 +659,21 @@ rhit.DetailPageController = class {
 	_createStack(stackName) {
 		return htmlToElement(`<div><div class="card cardStack draggable position-absolute" id="${stackName.id}" style=" left: ${stackName.posX}px; top: ${stackName.posY}px; position: absolute; z-index: 0;">
 		<div class="card-body">
-		  <ul class="nav nav-pills card-header-pills justify-content-between">
+		  <ul class="nav nav-pills card-header-pills justify-content-left">
 			<li class="nav-item">
 			  <a class="stackName">${stackName.name}</a>
-			</li>
-			<li class="nav-item fake-button">
-				<i id="options" class="material-icons stackMenu">more_vert</i>
 			</li>
 		  </ul>
 		  <hr>
 		</div>
 	  </div>
-	  <div class="dropdown pull-xs-right" stack="${stackName.id}" style=" left: ${stackName.posX + 250}px; top: ${stackName.posY + 3}px; position: absolute; z-index: 1;">
+	  <div class="dropdown pull-xs-right" stack="${stackName.id}" style=" left: ${stackName.posX + 250}px; top: ${stackName.posY + 3}px; position: absolute; z-index: 1000;">
 				<button class="btn bmd-btn-icon dropdown-toggle" type="button" id="lr2" data-toggle="dropdown" aria-haspopup="true">
 				  <i id="options" class="material-icons stackMenu">more_vert</i>
 				</button>
 				<div class="dropdown-menu dropdown-menu-right" aria-labelledby="lr2">
 				  <button class="dropdown-item menuDraw" type="button" data-toggle="modal" data-target="#drawImageDialog"><i class="material-icons">draw</i>&nbsp;&nbsp;&nbsp;Draw</button>
-				  <button class="dropdown-item menuShuffle" type="button" data-toggle="modal" data-target="#shuffleImageDialog"><i class="material-icons">shuffle</i>&nbsp;&nbsp;&nbsp;Shuffle</button>
+				  <button class="dropdown-item menuShuffle" type="button" data-toggle="modal" data-target="#shuffleImageDialog" data-id="${stackName.id}"><i class="material-icons">shuffle</i>&nbsp;&nbsp;&nbsp;Shuffle</button>
 				  <button class="dropdown-item menuSearch" type="button" data-toggle="modal" data-target="#searchImageDialog"><i class="material-icons">search</i>&nbsp;&nbsp;&nbsp;Search</button>
 				  <button class="dropdown-item menuEdit" type="button" data-toggle="modal" data-target="#editStackDialog" data-id="${stackName.id}"><i class="material-icons">edit</i>&nbsp;&nbsp;&nbsp;Edit Name</button>
 				  <button class="dropdown-item menuDelete" type="button" data-toggle="modal" data-target="#deleteStackDialog" data-id="${stackName.id}"><i class="material-icons">delete</i>&nbsp;&nbsp;&nbsp;Delete</button>
@@ -1060,8 +1066,7 @@ class Draggable {
 				el.style.left = `${leftPosition + 15}px`
 				el.style.top = `${topPosition + 42.8 + 15}px`
 			}
-			document.querySelector(`[stack="${this.el.id}"]`).setAttribute('style', `position: absolute; left: ${leftPosition + 234}px; top: ${topPosition}px; zIndex: 999;`)
-			console.log(document.querySelector(`#${this.el.id} .fake-button`).getBoundingClientRect()) 
+			document.querySelector(`[stack="${this.el.id}"]`).setAttribute('style', `position: absolute; left: ${leftPosition + 250}px; top: ${topPosition + 3}px; zIndex: 999;`)
 		}
 	}
 	
@@ -1075,39 +1080,3 @@ class Draggable {
 	}
 	
 }
-
-// Try for shuffling a stack
-function shuffle(array) {
-	let currentIndex = array.length, temporaryValue, randomIndex;
-  
-	// While there remain elements to shuffle
-	while (currentIndex !== 0) {
-	  // Pick a remaining element
-	  randomIndex = Math.floor(Math.random() * currentIndex);
-	  currentIndex--;
-  
-	  // Swap it with the current element
-	  temporaryValue = array[currentIndex];
-	  array[currentIndex] = array[randomIndex];
-	  array[randomIndex] = temporaryValue;
-	}
-  
-	return array;
-  }
-  
-  // Get the collection reference
-  const collectionRef = firebase.firestore().collection('myCollection');
-  
-  // Retrieve the documents
-  collectionRef.get().then((querySnapshot) => {
-	// Map the query snapshot to an array of document data
-	const data = querySnapshot.docs.map((doc) => doc.data());
-  
-	// Shuffle the data
-	const shuffledData = shuffle(data);
-  
-	// Write the shuffled data back to Firestore
-	for (let i = 0; i < shuffledData.length; i++) {
-	  collectionRef.doc(querySnapshot.docs[i].id).set(shuffledData[i]);
-	}
-  });
