@@ -562,6 +562,13 @@ rhit.DetailPageController = class {
 			document.querySelector("#inputStackName").focus();
 		});
 
+		$("searchStackDialog").on("show.bs.modal", (event) => {
+			console.log("Dialog is about to show up");
+		})
+		$("searchStackDialog").on("shown.bs.modal", (event) => {
+			console.log("Dialog is now visible");
+		})
+
 		document.querySelector("#submitDeleteImage").addEventListener("click", (event) => {
 			rhit.fbSingleImageManager.delete().then(function () {
 				console.log("Document successfully deleted!");
@@ -573,6 +580,17 @@ rhit.DetailPageController = class {
 		document.querySelector("#submitDeleteStack").addEventListener("click", (event) => {
 			rhit.fbStacksManager.delete(document.querySelector("#deleteStackId").innerText);
 		});
+
+		document.querySelector('#searchCardName').addEventListener('input', (event) => {
+			console.log(document.querySelector('#searchCardName').value)
+			for(let el of document.querySelectorAll('.searchImage')) {
+				if(!el.innerText.includes(document.querySelector('#searchCardName').value)) {
+					el.setAttribute('hidden', true)
+				} else {
+					el.removeAttribute('hidden');
+				}
+			}
+		})
 
 		rhit.fbSingleImageManager.beginListening(this.updateView.bind(this));
 		rhit.fbCardImagesManager.beginListening(this.updateView.bind(this));
@@ -642,6 +660,25 @@ rhit.DetailPageController = class {
 				document.querySelector("#deleteStackId").innerText = queries.getAttribute('data-id');
 			})
 		}
+		for (let queries of document.querySelectorAll('.menuSearch')) {
+			queries.addEventListener('click', (event) => {
+				document.querySelector('#searchStackId').innerText = queries.getAttribute('data-id')
+				const results = document.querySelector('#searchResult')
+				results.innerHTML = "";
+				for (let el of document.querySelectorAll(`[stack-id="${document.querySelector('#searchStackId').innerText}"`)) {
+					const result = htmlToElement(`
+					<button id="${el.getAttribute('data-id')}" type="button" class="btn searchImage" data-dismiss="modal">${el.getAttribute('alt')}</button>
+					`)
+					console.log(result)
+					results.appendChild(result)
+					result.addEventListener('click', (event) => {
+						firebase.firestore().collection('TapWater').doc(new URLSearchParams(window.location.search).get('id')).collection('cards').doc(el.getAttribute('data-id')).update({
+							lastTouched: firebase.firestore.Timestamp.now()
+						})
+					})
+				}
+			})
+		}
 
 	}
 	_createCard(cardImage) {
@@ -661,14 +698,14 @@ rhit.DetailPageController = class {
 		  <hr>
 		</div>
 	  </div>
-	  <div class="dropdown pull-xs-right" stack="${stackName.id}" style=" left: ${stackName.posX + 250}px; top: ${stackName.posY + 3}px; position: absolute; z-index: 1;">
+	  <div class="dropdown pull-xs-right" stack="${stackName.id}" style=" left: ${stackName.posX + 250}px; top: ${stackName.posY + 3}px; position: absolute; z-index: 1000;">
 				<button class="btn bmd-btn-icon dropdown-toggle" type="button" id="lr2" data-toggle="dropdown" aria-haspopup="true">
 				  <i id="options" class="material-icons stackMenu">more_vert</i>
 				</button>
 				<div class="dropdown-menu dropdown-menu-right" aria-labelledby="lr2">
 				  <button class="dropdown-item menuDraw" type="button" data-toggle="modal" data-target="#drawImageDialog"><i class="material-icons">draw</i>&nbsp;&nbsp;&nbsp;Draw</button>
 				  <button class="dropdown-item menuShuffle" type="button" data-toggle="modal" data-target="#shuffleImageDialog"><i class="material-icons">shuffle</i>&nbsp;&nbsp;&nbsp;Shuffle</button>
-				  <button class="dropdown-item menuSearch" type="button" data-toggle="modal" data-target="#searchImageDialog"><i class="material-icons">search</i>&nbsp;&nbsp;&nbsp;Search</button>
+				  <button class="dropdown-item menuSearch" type="button" data-toggle="modal" data-target="#searchStackDialog" data-id="${stackName.id}"><i class="material-icons">search</i>&nbsp;&nbsp;&nbsp;Search</button>
 				  <button class="dropdown-item menuEdit" type="button" data-toggle="modal" data-target="#editStackDialog" data-id="${stackName.id}"><i class="material-icons">edit</i>&nbsp;&nbsp;&nbsp;Edit Name</button>
 				  <button class="dropdown-item menuDelete" type="button" data-toggle="modal" data-target="#deleteStackDialog" data-id="${stackName.id}"><i class="material-icons">delete</i>&nbsp;&nbsp;&nbsp;Delete</button>
 				</div>
@@ -1076,6 +1113,20 @@ class Draggable {
 	
 }
 
+function search(stackId, cardId) {
+	// const stack = document.querySelector(`.cardStack[stack-id="${stackId}"]`);
+	// if(!stack) {
+	// 	console.log("Stack not found");
+	// 	return null;
+	// }
+	// const card = document.querySelector(`.card[card-id="${cardId}"]`);
+	// if(!card) {
+	// 	console.log(`Card with ID ${cardId} not found in stack ${stackId}.`);
+	// 	return null;
+	// }
+	// return card;
+	
+}
 // Try for shuffling a stack
 function shuffle(array) {
 	let currentIndex = array.length, temporaryValue, randomIndex;
