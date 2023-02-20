@@ -603,7 +603,7 @@ rhit.DetailPageController = class {
 			const caption = document.querySelector("#inputName").value;
 			console.log(`image ${image}`);
 			console.log(`caption ${caption}`);
-			rhit.fbSingleImageManager.update(null, caption);
+			rhit.fbSingleImageManager.update(image, caption);
 		});
 
 		document.querySelector("#submitEditStack").addEventListener("click", (event) => {
