@@ -783,7 +783,6 @@ rhit.DetailPageController = class {
 				  <i id="options" class="material-icons stackMenu">more_vert</i>
 				</button>
 				<div class="dropdown-menu dropdown-menu-right" aria-labelledby="lr2">
-				  <button class="dropdown-item menuDraw" type="button" data-toggle="modal" data-target="#drawImageDialog"><i class="material-icons">draw</i>&nbsp;&nbsp;&nbsp;Draw</button>
 				  <button class="dropdown-item menuSearch" type="button" data-toggle="modal" data-target="#searchStackDialog" data-id="${stackName.id}"><i class="material-icons">search</i>&nbsp;&nbsp;&nbsp;Search</button>
 				  <button class="dropdown-item menuShuffle" type="button" data-toggle="modal" data-target="#shuffleImageDialog" data-id="${stackName.id}"><i class="material-icons">shuffle</i>&nbsp;&nbsp;&nbsp;Shuffle</button>
 				  <button class="dropdown-item menuEdit" type="button" data-toggle="modal" data-target="#editStackDialog" data-id="${stackName.id}"><i class="material-icons">edit</i>&nbsp;&nbsp;&nbsp;Edit Name</button>
